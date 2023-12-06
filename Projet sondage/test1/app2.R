@@ -1,68 +1,58 @@
 library(shiny)
+library(googlesheets4)
 library(ggplot2)
 library(dplyr)
 
-
-library(googlesheets4)
-
-# # Authentification Google Sheets
-# gs4_auth()
-# 
-# # Récupérer les données depuis une feuille Google Sheets
-# d <- read_sheet("https://docs.google.com1/spreadsheets/d/1fWHl5EpG-fnCEK8wtwYGpaHbqRHK4hgTErtNXdVBqI0/edit?resourcekey#gid=1935173226")
-# 
-# #en local : 
-# #d=read.csv("C:/Users/Cédric/OneDrive/Documents/Projet sondage/Sondage_167.csv",header=F)
-# #colnames(d) <- d[1, ]
-# 
-# # Supprimer les 35 premières lignes
-# #d <- d[-c(1:34), ]
-# 
-# # Utilisez maintenant l'objet "sheet" pour manipuler les données comme vous le souhaitez.
-# 
-# d <- d[-(175:177), ]
-
-
-# Define UI for the application
+# Define UI
 ui <- fluidPage(
-  titlePanel("Test shiny APP, Sondage sur l'IA"),
-  
-  actionButton("loadData", "Charger les données"),
-  
-  fluidRow(
-    column(6,
-           plotOutput("aiUsageFrequencyPlot"),
-           plotOutput("educationLevelPlot")
-    ),
-    
-    column(6,
-           plotOutput("agePlot"),
-           plotOutput("genderPieChart")
-    )
+  ( tabsetPanel(
+    tabPanel("tab 1",  titlePanel("Test shiny APP, Sondage sur l'IA"),
+             actionButton("authButton", "Authentifier avec Google Sheets"),
+             actionButton("loadData", "Charger les données"),
+             fluidRow(
+               column(6, plotOutput("aiUsageFrequencyPlot"), plotOutput("educationLevelPlot")),
+               column(6, plotOutput("agePlot"), plotOutput("genderPieChart")),
+               # Zone d'affichage pour les messages
+               verbatimTextOutput("messageOutput")),
+    tabPanel("tab 2", "contents"),
+    tabPanel("tab 3", "contents")))
+ 
   )
 )
 
 # Define server logic
 server <- function(input, output) {
-  library(shiny)
-  library(googlesheets4)
-  library(ggplot2)
-  library(dplyr)
-  # Réagir au clic sur le bouton pour charger les données
+  # Variable réactive pour stocker les données
+  data_reactive <- reactiveVal(NULL)
+  message_reactive <- reactiveVal("En attente de chargement des données...")
+  observeEvent(input$authButton, {
+    gs4_auth()
+    message_reactive("Authentification effectuée. Vous pouvez maintenant charger les données.")
+  })
+  
+  
   observeEvent(input$loadData, {
     # Authentification Google Sheets
     gs4_auth()
     
     # Récupérer les données depuis une feuille Google Sheets
-    d <- read_sheet("https://docs.google.com/spreadsheets/d/1fWHl5EpG-fnCEK8wtwYGpaHbqRHK4hgTErtNXdVBqI0/edit?resourcekey#gid=1935173226")
-    
-    # Supprimer les lignes indésirables
+    d <- tryCatch({
+      read_sheet("https://docs.google.com/spreadsheets/d/1fWHl5EpG-fnCEK8wtwYGpaHbqRHK4hgTErtNXdVBqI0/edit?resourcekey#gid=1935173226")
+    }, error = function(e) {
+      message_reactive("Erreur lors du chargement des données.")
+      NULL
+    })
+   
     d <- d[-(175:177), ]
     
-    # Mettre à jour les plots ici...
+    # Mettre à jour la variable réactive avec les données
+    data_reactive(d)
   })
-  # Plot for Age Distribution
+  
+  # Graphique de distribution des âges
   output$agePlot <- renderPlot({
+    if (is.null(data_reactive())) return(NULL)
+    d <- data_reactive()
     ggplot(d, aes(y=..density..,x=`1 - Quel est ton âge ? (nombre)`)) + 
       geom_histogram(binwidth = 1, fill="grey", color="black") +
       theme_minimal() +
@@ -71,8 +61,10 @@ server <- function(input, output) {
       ggtitle("Distribution des Âges")
   })
   
-  # Pie Chart for Gender Distribution with Custom Colors
+  # Graphique de répartition des genres
   output$genderPieChart <- renderPlot({
+    if (is.null(data_reactive())) return(NULL)
+    d <- data_reactive()
     gender_data <- d %>% 
       group_by(`2 - Quel est ton genre ?`) %>% 
       summarise(Count = n()) %>% 
@@ -90,8 +82,10 @@ server <- function(input, output) {
       ggtitle("Répartition des Genres")
   })
   
-  # Bar Chart for AI Usage Frequency
+  # Graphique de fréquence d'utilisation de l'IA
   output$aiUsageFrequencyPlot <- renderPlot({
+    if (is.null(data_reactive())) return(NULL)
+    d <- data_reactive()
     ai_usage_data <- d %>% 
       group_by(`6 - Si oui, à quelle fréquence utilises-tu une IA générative (ChatGPT, Mid-journey ou équivalent) ?`) %>% 
       summarise(Count = n()) %>%
@@ -108,7 +102,10 @@ server <- function(input, output) {
       ggtitle("Proportion d'utilisation des IA génératives")
   })
   
+  # Graphique de distribution des niveaux de formation
   output$educationLevelPlot <- renderPlot({
+    if (is.null(data_reactive())) return(NULL)
+    d <- data_reactive()
     education_data <- d %>% 
       group_by(`3 - Quel est ton niveau universitaire actuel ?`) %>% 
       summarise(Count = n()) %>%
@@ -123,12 +120,10 @@ server <- function(input, output) {
       ylab("Proportion") +
       ggtitle("Distribution des Niveaux de Formation")
   })
-  
-  
-    
+  output$messageOutput <- renderText({
+    message_reactive()
+  })
 }
-
 
 # Run the application
 shinyApp(ui = ui, server = server)
-

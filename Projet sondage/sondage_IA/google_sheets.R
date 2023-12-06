@@ -14,3 +14,6 @@ d=read_sheet("https://docs.google.com/spreadsheets/d/1fWHl5EpG-fnCEK8wtwYGpaHbqR
 d<- d[-(1:33), ]
 d=d[-1]
 d
+rsconnect::setAccountInfo(name='cedricj07',
+                          token='591B2F1088980CF2629214A02AF326B8',
+                          secret='pIgoQvJQuywqoLkKGetHwnhBVVww5z5LBzOIFm0x')
