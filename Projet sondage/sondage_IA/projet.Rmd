@@ -1,0 +1,408 @@
+---
+title: "analyse_sondage"
+author: "Jehanne Baleydier"
+date: "2024-01-16"
+output: html_document
+---
+Répertoire de travail
+```{r}
+setwd("~/BUT SD/semestre 3/techniques de sondages/projet/analyse_donnees/code")
+```
+
+Importation des données : 
+```{r}
+data <- read.csv("~/BUT SD/semestre 3/techniques de sondages/projet/analyse_donnees/data/Sondage_IA.csv", header = TRUE, sep = ",")
+```
+
+Librairies : 
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(RColorBrewer)
+library(paletteer)
+couleurs <- paletteer_d("dichromat::BluetoDarkOrange_18")
+```
+### Analyse par rapport au sexe
+
+
+Sexe en fonction de compréhension principes
+```{r}
+d_principe_sexe <- data %>% 
+  group_by(sexe) %>% 
+  summarise(
+    total = n(), 
+    oui = sum(principes == "Oui") / total, 
+    non = sum(principes == "Non") / total
+  )
+
+d_principe_sexe <- d_principe_sexe %>% pivot_longer(cols = c(oui, non), 
+               names_to = "reponse", values_to = "proportion")
+```
+graphique : 
+```{r}
+ggplot(d_principe_sexe, aes(x = sexe, y = proportion, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = scales::percent(proportion)), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_color_manual(values = couleurs) +
+  #scale_fill_manual(values = c("oui" = "darkblue", "non" = "lightblue")) +
+  labs(title = "Compréhension du fonctionnement de l'IA par Sexe",
+       x = "Sexe",
+       y = "Proportion",
+       fill = "Réponse") +
+  theme_minimal()
+```
+Pour moi il y a ici une chose flagrante plus de sociologie qui n'a peut-être pas vraiment de rapport avec le sujet mais on peut voir que les hommes ont tendance à dire plus facilement qu'ils comprennent comment fonctionne l'IA alors que les femmes sont plutôt partagées sur le sujet. 
+
+Sexe en fonction de la vision de l'avenir avec l'IA (optimiste pessimiste ou neutre ):
+```{r}
+d_vision_sexe <- data %>% 
+  group_by(sexe) %>%
+  summarise(
+    total = n(),
+    pessimiste = sum(optimiste == "Pessimiste") / total, 
+    neutre = sum(optimiste == "Neutre") / total,
+    optimiste = sum(optimiste == "Optimiste") / total
+  )
+
+d_vision_sexe <- d_vision_sexe %>% pivot_longer(cols = c(pessimiste, neutre, optimiste),
+               names_to = "reponse", values_to = "proportion")
+```
+graphique : 
+```{r}
+ggplot(d_vision_sexe, aes(x = sexe, y = proportion, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = scales::percent(proportion)), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs)
+  #scale_fill_brewer(palette = "Blues") +
+  labs(title = "Vision de l'avenir avec l'IA par Sexe",
+       x = "Sexe",
+       y = "Proportion",
+       fill = "Réponse") +
+  theme_minimal()
+
+```
+Les hommes sont beaucoup plus optimistes que les femmes. 
+
+
+Sexe en fonction de l'apprentissage de l'IA : 
+```{r}
+d_apprentissage_sexe <- data %>% group_by(sexe) %>% 
+  summarise(
+    total = n(),
+    oui = sum(apprendre == "Oui") / total, 
+    non = sum(apprendre == "Non") / total, 
+    ne_sait_pas = sum(apprendre == "Je ne sais pas") / total
+  )
+d_apprentissage_sexe <- d_apprentissage_sexe %>% pivot_longer(cols = c(oui, non, ne_sait_pas),
+               names_to = "reponse", values_to = "proportion")
+
+```
+
+graphique : 
+```{r}
+ggplot(d_apprentissage_sexe, aes(x = sexe, y = proportion, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = scales::percent(proportion)), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs) +
+  #scale_fill_brewer(palette = "Blues")  +
+  labs(title = "Apprentissage de l'IA par Sexe",
+       x = "Sexe",
+       y = "Proportion",
+       fill = "Réponse") +
+  theme_minimal()
+
+```
+Sexe en fonction de se sentir concerné ou non : 
+```{r}
+d_concerne_sexe <- data %>% group_by(sexe) %>% 
+  summarise(
+    total = n(),
+    oui = sum(concerné == "Oui") / total, 
+    non = sum(concerné == "Non") / total
+  )
+d_concerne_sexe <- d_concerne_sexe %>% pivot_longer(cols = c(oui, non),
+               names_to = "reponse", values_to = "proportion")
+```
+graphique : 
+```{r}
+ggplot(d_concerne_sexe, aes(x = sexe, y = proportion, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = scales::percent(proportion)), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs) +
+  #scale_fill_manual(values = c("oui" = "lightblue", "non" = "darkblue")) +
+  labs(title = "Sentiment de concernement par Sexe",
+       x = "Sexe",
+       y = "Proportion",
+       fill = "Réponse") +
+  theme_minimal()
+
+
+```
+En terme de vision par rapport à l'emploi par sexe : 
+```{r}
+d_emploi_sexe <- data %>% group_by(sexe) %>% 
+  summarise(
+    total = n(),
+    modification = sum(emploi == "Modification des emplois existants") / total, 
+    suppression = sum(emploi == "Suppression d'emplois") / total,
+    creation = sum(emploi == "Création de nouveaux emplois") / total,
+    ne_sait_pas = sum(emploi == "Je ne sais pas") / total
+  )
+d_emploi_sexe <- d_emploi_sexe %>% pivot_longer(cols = c(modification, suppression, creation, ne_sait_pas),
+               names_to = "reponse", values_to = "proportion")
+
+```
+graphique : 
+```{r}
+ggplot(d_emploi_sexe, aes(x = sexe, y = proportion, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = scales::percent(proportion)), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs) +
+  #scale_fill_brewer(palette = "Blues")+
+  labs(title = "Vision de l'avenir de l'emploi par Sexe",
+       x = "Sexe",
+       y = "Proportion",
+       fill = "Réponse") +
+  theme_minimal()
+
+
+```
+L'ia peut-elle acqérir une conscience ? 
+```{r}
+d_conscience_sexe <- data %>% group_by(sexe) %>% 
+  summarise(
+    total = n(),
+    oui = sum(conscience == "Oui") / total, 
+    non = sum(conscience == "Non") / total,
+    ne_sait_pas = sum(conscience == "Je ne sais pas") / total
+  )
+d_conscience_sexe <- d_conscience_sexe %>% pivot_longer(cols = c(oui, non, ne_sait_pas),
+               names_to = "reponse", values_to = "proportion")
+```
+graphique
+```{r}
+ggplot(d_conscience_sexe, aes(x = sexe, y = proportion, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = scales::percent(proportion)), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs) +
+  #scale_fill_brewer(palette = "Blues")  +
+  labs(title = "L'IA peut-elle acquérir une conscience ? par Sexe",
+       x = "Sexe",
+       y = "Proportion",
+       fill = "Réponse") +
+  theme_minimal()
+```
+régulation de l'IA : 
+```{r}
+d_regulation_sexe <- data %>% group_by(sexe) %>% 
+  summarise(
+    total = n(),
+    oui = sum(réguler == "Oui") / total, 
+    non = sum(réguler == "Non") / total,
+    ne_sait_pas = sum(réguler == "Je ne sais pas") / total
+  )
+d_regulation_sexe <- d_regulation_sexe %>% pivot_longer(cols = c(oui, non, ne_sait_pas),
+               names_to = "reponse", values_to = "proportion")
+```
+graphique : 
+```{r}
+ggplot(d_regulation_sexe, aes(x = sexe, y = proportion, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = scales::percent(proportion)), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs) +
+  #scale_fill_brewer(palette = "Blues") +
+  labs(title = "Faut-il réguler l'IA ? par Sexe",
+       x = "Sexe",
+       y = "Proportion",
+       fill = "Réponse") +
+  theme_minimal()
+
+```
+Puce :
+```{r}
+d_puce_sexe <- data %>% group_by(sexe) %>% 
+  summarise(
+    total = n(),
+    oui = sum(puce == "Oui") / total, 
+    non = sum(puce == "Non") / total,
+    ne_sait_pas = sum(puce == "Je ne sais pas") / total
+  )
+d_puce_sexe <- d_puce_sexe %>% pivot_longer(cols = c(oui, non, ne_sait_pas),
+               names_to = "reponse", values_to = "proportion")
+```
+graphique : 
+```{r}
+ggplot(d_puce_sexe, aes(x = sexe, y = proportion, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = scales::percent(proportion)), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs) +
+  #scale_fill_brewer(palette = "Blues") +
+  labs(title = "Seriez-vous prêt à vous faire implanter une puce ? par Sexe",
+       x = "Sexe",
+       y = "Proportion",
+       fill = "Réponse") +
+  theme_minimal()
+
+
+```
+### Analyse par rapport à l'âge : 
+Est-ce qu'on ferait pas des tranches d'âge ? Oui sinon c'est illisible sur le graphique
+```{r}
+d_age <- data %>% mutate(
+  age = case_when(
+    age < 20 ~ "[17-19]",
+    age >= 20 & age < 23 ~ "[20-22]",
+    age >= 23 & age < 26 ~ "[23-25]",
+    age >= 26 & age < 29 ~ "[26-28]",
+    age >= 29 & age < 32 ~ "[29-31]",
+    age >= 32 ~ "[32 +]"
+  )
+)
+```
+Peut-être qu'il faut aussi faire des graphiques avec des nombres et pas forcément des proportions du coup étant donné qu'à la différence du sexe il y a une grande différence de distribution des âges. 
+
+## Sentiment de compréhension de l'IA par âge :
+```{r}
+
+d_comprehension_age <- d_age %>% group_by(age) %>% 
+  summarise(
+    total = n(),
+    oui = sum(principes == "Oui") / total, 
+    non = sum(principes == "Non") / total
+  )
+d_comprehension_age <- d_comprehension_age %>% pivot_longer(cols = c(oui, non),
+               names_to = "reponse", values_to = "proportion")
+```
+graphique : 
+```{r}
+ggplot(d_comprehension_age, aes(x = age, y = proportion, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = scales::percent(proportion)), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs) +
+  #scale_fill_brewer(palette = "Blues") +
+  labs(title = "Sentiment de compréhension de l'IA par âge",
+       x = "Age",
+       y = "Proportion",
+       fill = "Réponse") +
+  theme_minimal()
+
+```
+En nombre  
+```{r}
+d_comprehension_age2 <- d_age %>% group_by(age) %>% 
+  summarise(
+    total = n(),
+    oui = sum(principes == "Oui") , 
+    non = sum(principes == "Non") 
+  )
+d_comprehension_age2 <- d_comprehension_age2 %>% pivot_longer(cols = c(oui, non),
+               names_to = "reponse", values_to = "nombre")
+```
+graphique : 
+```{r}
+ggplot(d_comprehension_age2, aes(x = age, y = nombre, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = nombre), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs) +
+  #scale_fill_brewer(palette = "Blues") +
+  labs(title = "Sentiment de compréhension de l'IA par âge",
+       x = "Age",
+       y = "Nombre",
+       fill = "Réponse") +
+  theme_minimal()
+```
+Peut-être pas tellement de différence que ça en fonction de l'âge. 
+
+
+## Vision avenir par âge : 
+```{r}
+d_avenir_age <- d_age %>% group_by(age) %>% 
+  summarise(
+    total = n(),
+    pessimiste = sum(optimiste == "Pessimiste") / total, 
+    neutre = sum(optimiste == "Neutre") / total,
+    optimiste = sum(optimiste == "Optimiste") / total
+  )
+d_avenir_age <- d_avenir_age %>% pivot_longer(cols = c(pessimiste, neutre, optimiste),
+               names_to = "reponse", values_to = "proportion")
+```
+graphique : 
+```{r}
+ggplot(d_avenir_age, aes(x = age, y = proportion, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = scales::percent(proportion)), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs) +
+  #scale_fill_brewer(palette = "Blues") +
+  labs(title = "Vision de l'avenir par âge",
+       x = "Age",
+       y = "Proportion",
+       fill = "Réponse") +
+  theme_minimal()
+
+
+```
+En nombre ça donne quoi ?
+```{r}
+d_avenir_age2 <- d_age %>% group_by(age) %>% 
+  summarise(
+    total = n(),
+    pessimiste = sum(optimiste == "Pessimiste") , 
+    neutre = sum(optimiste == "Neutre") ,
+    optimiste = sum(optimiste == "Optimiste") 
+  )
+d_avenir_age2 <- d_avenir_age2 %>% pivot_longer(cols = c(pessimiste, neutre, optimiste), names_to = "reponse", values_to = "nombre")
+```
+graphique : 
+```{r}
+ggplot(d_avenir_age2, aes(x = age, y = nombre, fill = reponse)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_text(aes(label = nombre), 
+            position = position_dodge(width = 0.9), 
+            vjust = -0.25, 
+            color = "black") +
+  scale_fill_manual(values = couleurs) +
+  #scale_fill_brewer(palette = "Blues") +
+  labs(title = "Vision de l'avenir par âge",
+       x = "Age",
+       y = "Nombre",
+       fill = "Réponse") +
+  theme_minimal()
+
+
+```
+Pour 32 + je trouve que c'est assez flagrant pour le reste pas tant que ça au vu du nombre de valeurs. 
+
+
